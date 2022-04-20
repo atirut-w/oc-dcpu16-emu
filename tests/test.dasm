@@ -1,0 +1,9 @@
+    OUT text
+    OUT newline
+    OUV 42069
+:halt
+    SET PC, halt
+:newline
+    DAT 0x0A, 0x00
+:text
+    DAT "OpenComputers rulez!", 0
