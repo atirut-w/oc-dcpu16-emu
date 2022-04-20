@@ -7,7 +7,7 @@ local memory = setmetatable({}, {
             if address >= 0x20 and address <= 0x3f then
                 return -- Fail silently
             else
-                rawset(self, address % 0x10000, value % 0x10000)
+                rawset(self, address, value)
             end
         else
             error("bad memory value")
@@ -21,7 +21,7 @@ local memory = setmetatable({}, {
         elseif address >= 0x20 and address <= 0x3f then
             return address - 0x21
         else
-            return rawget(self, address % 0x10000) or 0
+            return rawget(self, address) or 0
         end
     end
 })
@@ -95,10 +95,11 @@ while true do
         end
     elseif opcode == 0x01 then
         memory[b] = memory[a]
-        --debug("SET %x, %x", b, a)
+    elseif opcode == 0x02 then
+        memory[b] = (memory[b] + memory[a]) % 0x10000
     else
         error(string.format("Unknown opcode %x at %x", opcode, memory[0x1c] - 1))
     end
 
-    computer.pullSignal(1)
+    computer.pullSignal(0) -- Comment this out to unlimit the speed
 end
