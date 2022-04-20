@@ -90,6 +90,8 @@ while true do
             for i = 1, #str do
                 putchar(str:sub(i, i))
             end
+        else
+            error(string.format("Unknown special opcode %x at %x", b, memory[0x1c] - 1))
         end
     elseif opcode == 0x01 then
         memory[b] = memory[a]
