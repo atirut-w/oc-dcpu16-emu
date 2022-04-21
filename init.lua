@@ -26,6 +26,28 @@ local memory = setmetatable({}, {
     end
 })
 
+---@class DeviceInterface
+---@field id integer
+---@field version integer
+---@field manufacturer integer
+---@field interrupt function
+
+---@type DeviceInterface[]
+local devices = {}
+
+---@type table<string, fun(address: string): DeviceInterface>
+local drivers = {}
+
+function drivers.drive(addr)
+    return {}
+end
+
+for c_addr, c_type in component.list() do
+    if drivers[c_type] then
+        table.insert(devices, drivers[c_type](c_addr))
+    end
+end
+
 do
     local fd = filesystem.open("/boot.bin")
 
@@ -80,6 +102,8 @@ while true do
     if opcode == 0x00 then
         if b == 0x00 then
             error("Reserved special opcode")
+        elseif b == 0x10 then
+            memory[a] = #devices
         elseif b == 0x13 then
             local str_addr = 0x40 + memory[a]
             while memory[str_addr] ~= 0 do
