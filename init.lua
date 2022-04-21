@@ -14,7 +14,10 @@ local memory = setmetatable({}, {
         end
     end,
     __index = function(self, address)
-        if address == 0x1f then
+        if address >= 0x08 and address <= 0x0f then
+            local ind_addr = rawget(self, address - 0x08)
+            return rawget(self, ind_addr)
+        elseif address == 0x1f then
             local value = rawget(self, 0x40 + rawget(self, 0x1c))
             rawset(self, 0x1c, rawget(self, 0x1c) + 1)
             return value
