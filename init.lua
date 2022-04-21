@@ -64,6 +64,7 @@ do
         if y > height then
             y = height
             gpu.copy(1, 1, width, height, 0, -1)
+            gpu.fill(1, height, width, 1, " ")
         end
     end
 end
