@@ -39,7 +39,23 @@ local devices = {}
 local drivers = {}
 
 function drivers.drive(addr)
-    return {}
+    local proxy = component.proxy(addr)
+
+    return {
+        interrupt = function()
+            if memory[0x00] == 2 then
+            elseif memory[0x00] == 3 then
+                local data = ""
+                local addr = 0x40 + memory[0x04]
+                for i = 0, 512 do
+                    local char = memory[addr + i]
+                    data = data .. utf8.char(char & 0xff, char >> 8)
+                    addr = addr + 1
+                end
+                proxy.writeSector(memory[0x03] + 1, data)
+            end
+        end
+    }
 end
 
 for c_addr, c_type in component.list() do
@@ -104,6 +120,10 @@ while true do
             error("Reserved special opcode")
         elseif b == 0x10 then
             memory[a] = #devices
+        elseif b == 0x12 then
+            if devices[memory[a] + 1] then
+                devices[memory[a] + 1].interrupt()
+            end
         elseif b == 0x13 then
             local str_addr = 0x40 + memory[a]
             while memory[str_addr] ~= 0 do
