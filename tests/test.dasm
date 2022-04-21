@@ -1,9 +1,27 @@
-    OUT text
-    OUT newline
-    OUV 42069
+    OUT text_writing
+
+    SET A, 3
+    SET X, 0
+    SET Y, data
+    HWI 0
+
+    OUT text_reading
+
+    SET A, 2
+    SET X, 0
+    SET Y, diskbuffer
+    HWI 0
+
+    OUT text_result
+    OUT diskbuffer
 :halt
     SET PC, halt
-:newline
-    DAT 0x0A, 0x00
-:text
-    DAT "OpenComputers rulez!", 0
+:text_writing
+    DAT "Writing to disk...\n", 0
+:text_reading
+    DAT "Reading from disk...\n", 0
+:text_result
+    DAT "Result from disk: ", 0
+:data
+    DAT "(Insert lorem ipsum here lol)", 0
+:diskbuffer

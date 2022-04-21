@@ -47,13 +47,17 @@ function drivers.drive(addr)
     return {
         interrupt = function()
             if memory[0x00] == 2 then
+                local data = proxy.readSector(memory[0x03] + 1)
+                local addr = 0x40 + memory[0x04]
+                for i = 1, #data do
+                    memory[addr + i - 1] = data:byte(i)
+                end
             elseif memory[0x00] == 3 then
                 local data = ""
                 local addr = 0x40 + memory[0x04]
                 for i = 0, 512 do
-                    local char = memory[addr + i]
-                    data = data .. utf8.char(char & 0xff, char >> 8)
-                    addr = addr + 1
+                    local char = utf8.char(memory[addr + i])
+                    data = data .. char
                 end
                 proxy.writeSector(memory[0x03] + 1, data)
             end
@@ -74,9 +78,12 @@ do
         error("boot.bin not found")
     end
 
+    local loadtext = "Loading boot.bin..."
+    gpu.set(1,1, loadtext)
     for i = 0, (filesystem.size("/boot.bin") / 2) - 1 do
         memory[0x40 + i] = string.unpack(">H", filesystem.read(fd, 2))
     end
+    gpu.set(1,1, string.rep(" ", #loadtext))
 end
 
 local function debug(fmt, ...)
