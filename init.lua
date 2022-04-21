@@ -38,6 +38,7 @@ local memory = setmetatable({}, {
 ---@field version integer
 ---@field manufacturer integer
 ---@field interrupt function
+---@field update function
 
 ---@type DeviceInterface[]
 local devices = {}
@@ -82,6 +83,35 @@ function drivers.keyboard(addr)
                 end
             end
         end
+    }
+end
+
+function drivers.gpu(addr)
+    local proxy = component.proxy(addr)
+
+    local vram_addr = 0
+
+    proxy.setResolution(32, 12)
+
+    return {
+        interrupt = function()
+            if memory[0x00] == 0 then
+                vram_addr = 0x40 + memory[0x01]
+            end
+        end,
+        update = function()
+            if vram_addr > 0 then
+                for y = 1, 12 do
+                    local line = ""
+                    for x = 1, 32 do
+                        local cell = memory[vram_addr + (y - 1) * 32 + x - 1] or 0
+                        local char = cell & 0x7f
+                        line = line .. string.char(char)
+                    end
+                    gpu.set(1, y, line)
+                end
+            end
+        end,
     }
 end
 
@@ -154,7 +184,7 @@ while true do
         local d_b = memory[b]
     elseif opcode == 0x00 then
         if b == 0x00 then
-            error("Reserved special opcode")
+            error(string.format("Reserved special opcode %x at %x", opcode, memory[0x1c] - 1))
         elseif b == 0x10 then
             memory[a] = #devices
         elseif b == 0x12 then
@@ -197,5 +227,11 @@ while true do
         error(string.format("Unknown opcode %x at %x", opcode, memory[0x1c] - 1))
     end
 
-    --computer.pullSignal(0) -- Comment this out to unlimit the speed
+    for i, interface in ipairs(devices) do
+        if interface.update then
+            interface.update()
+        end
+    end
+
+    computer.pullSignal(0) -- Comment this out to unlimit the speed
 end

@@ -1,16 +1,8 @@
-    SET A, 1
-:loop
+    SET A, 0
+    SET B, vram
     HWI 0
-    IFG C, 0
-    SET PC, key_pressed
-    SET PC, loop
-:key_pressed
-    OUV C
-    OUT text_newline
-    SET PC, loop
 :halt
     SET PC, halt
-:text_newline
-    DAT 10, 0
-:text_component_count
-    DAT "Component count: ", 0
+:vram
+    DAT 0xf04f ; O
+    DAT 0xf04b ; K
