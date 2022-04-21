@@ -121,7 +121,17 @@ while true do
     elseif opcode == 0x01 then
         memory[b] = memory[a]
     elseif opcode == 0x02 then
-        memory[b] = (memory[b] + memory[a]) % 0x10000
+        local result = (memory[b] + memory[a])
+        memory[b] = result & 0xffff
+        if result > 0xffff then
+            memory[0x1d] = 0x0001
+        end
+    elseif opcode == 0x03 then
+        local result = (memory[b] - memory[a])
+        memory[b] = result & 0xffff
+        if result < 0 then
+            memory[0x1d] = 0xffff
+        end
     else
         error(string.format("Unknown opcode %x at %x", opcode, memory[0x1c] - 1))
     end
