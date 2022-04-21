@@ -1,27 +1,16 @@
-    OUT text_writing
-
-    SET A, 3
-    SET X, 0
-    SET Y, data
+    SET A, 1
+:loop
     HWI 0
-
-    OUT text_reading
-
-    SET A, 2
-    SET X, 0
-    SET Y, diskbuffer
-    HWI 0
-
-    OUT text_result
-    OUT diskbuffer
+    IFG C, 0
+    SET PC, key_pressed
+    SET PC, loop
+:key_pressed
+    OUV C
+    OUT text_newline
+    SET PC, loop
 :halt
     SET PC, halt
-:text_writing
-    DAT "Writing to disk...\n", 0
-:text_reading
-    DAT "Reading from disk...\n", 0
-:text_result
-    DAT "Result from disk: ", 0
-:data
-    DAT "(Insert lorem ipsum here lol)", 0
-:diskbuffer
+:text_newline
+    DAT 10, 0
+:text_component_count
+    DAT "Component count: ", 0

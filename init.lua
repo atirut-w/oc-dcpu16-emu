@@ -17,6 +17,10 @@ local memory = setmetatable({}, {
         if address >= 0x08 and address <= 0x0f then
             local ind_addr = rawget(self, address - 0x08)
             return rawget(self, ind_addr)
+        elseif address == 0x1e then
+            local addr = rawget(self, 0x40 + rawget(self, 0x1c))
+            rawset(self, 0x1c, rawget(self, 0x1c) + 1)
+            return rawget(self, addr)
         elseif address == 0x1f then
             local value = rawget(self, 0x40 + rawget(self, 0x1c))
             rawset(self, 0x1c, rawget(self, 0x1c) + 1)
@@ -60,6 +64,22 @@ function drivers.drive(addr)
                     data = data .. char
                 end
                 proxy.writeSector(memory[0x03] + 1, data)
+            end
+        end
+    }
+end
+
+function drivers.keyboard(addr)
+    return {
+        interrupt = function()
+            if memory[0x00] == 1 then
+                local signal, signal_addr, char = computer.pullSignal(0)
+
+                if signal == "key_down" and signal_addr == addr then
+                    memory[0x02] = char
+                else
+                    memory[0x02] = 0x00
+                end
             end
         end
     }
@@ -117,6 +137,7 @@ do
     end
 end
 
+local skip = false
 while true do
     local word = memory[0x40 + memory[0x1c]]
     local opcode = word & 0x1f
@@ -125,7 +146,13 @@ while true do
 
     memory[0x1c] = memory[0x1c] + 1
 
-    if opcode == 0x00 then
+    if skip then
+        skip = false
+
+        -- Read A and B in case they refer to next word
+        local d_a = memory[a]
+        local d_b = memory[b]
+    elseif opcode == 0x00 then
         if b == 0x00 then
             error("Reserved special opcode")
         elseif b == 0x10 then
@@ -162,9 +189,13 @@ while true do
         if result < 0 then
             memory[0x1d] = 0xffff
         end
+    elseif opcode == 0x14 then
+        if not (memory[b] > memory[a]) then
+            skip = true
+        end
     else
         error(string.format("Unknown opcode %x at %x", opcode, memory[0x1c] - 1))
     end
 
-    computer.pullSignal(0) -- Comment this out to unlimit the speed
+    --computer.pullSignal(0) -- Comment this out to unlimit the speed
 end
